@@ -59,17 +59,19 @@ public class DrawTrajectoryAndShoot : MonoBehaviour
 
     void Update()
     {
-        // PlacementMode true ikən boş yerə klik edilsə → Aim mode-a keç
         if (ballDrag != null && ballDrag.PlacementMode)
         {
             if (PointerDown(out var firstPos))
             {
-                if (!ballDrag.LastPointerDownOnBall)
-                    ballDrag.PlacementMode = false;
-                else
+                // ✅ click topun üstündədirsə placementdən çıxma
+                if (ballDrag.IsPointerOnBallPublic(firstPos))   // aşağıda necə edəcəyik
                     return;
+
+                // ✅ topun üstündə deyilsə aim mode-a keç
+                ballDrag.PlacementMode = false;
             }
         }
+
 
         if (ballDrag != null && ballDrag.IsDragging) return;
 
@@ -102,30 +104,30 @@ public class DrawTrajectoryAndShoot : MonoBehaviour
     }
 
     void FixedUpdate()
-{
-    if (!useMagnus) return;
-    if (rb == null) return;
-    if (rb.isKinematic) return;
+    {
+        if (!useMagnus) return;
+        if (rb == null) return;
+        if (rb.isKinematic) return;
 
-    // yalnız havada təsir etsin istəyirsənsə:
-    // if (Physics.Raycast(rb.position, Vector3.down, 0.2f)) return;
+        // yalnız havada təsir etsin istəyirsənsə:
+        // if (Physics.Raycast(rb.position, Vector3.down, 0.2f)) return;
 
-    Vector3 v = rb.linearVelocity;
-    float speed = v.magnitude;
-    if (speed < 0.5f) return;
+        Vector3 v = rb.linearVelocity;
+        float speed = v.magnitude;
+        if (speed < 0.5f) return;
 
-    // spin vektoru (rad/s)
-    Vector3 w = rb.angularVelocity;
+        // spin vektoru (rad/s)
+        Vector3 w = rb.angularVelocity;
 
-    // Magnus force ~ w x v
-    Vector3 magnus = Vector3.Cross(w, v) * magnusStrength;
+        // Magnus force ~ w x v
+        Vector3 magnus = Vector3.Cross(w, v) * magnusStrength;
 
-    // limitlə (birdən uçub getməsin)
-    if (magnus.magnitude > magnusMax)
-        magnus = magnus.normalized * magnusMax;
+        // limitlə (birdən uçub getməsin)
+        if (magnus.magnitude > magnusMax)
+            magnus = magnus.normalized * magnusMax;
 
-    rb.AddForce(magnus, ForceMode.Acceleration);
-}
+        rb.AddForce(magnus, ForceMode.Acceleration);
+    }
 
 
     // ===================== CORE: base dir + curve =====================
@@ -154,9 +156,9 @@ public class DrawTrajectoryAndShoot : MonoBehaviour
 
         Vector3 shotDir = (baseDir + Vector3.up * upwardLift).normalized;
 
-       rb.linearVelocity = Vector3.zero;
-rb.angularVelocity = Vector3.zero;
-rb.AddForce(shotDir * exitVelocity, ForceMode.VelocityChange);
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.AddForce(shotDir * exitVelocity, ForceMode.VelocityChange);
 
 
         // 4) Curve üçün spin (Y oxu ətrafında)

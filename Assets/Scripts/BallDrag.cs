@@ -33,13 +33,22 @@ public class BallDrag : MonoBehaviour
 
     private int pointerDownFrame = -1;
 
-    public CameraFollowGoalFocus cameraFocus; 
+    public CameraFollowGoalFocus cameraFocus;
+    public bool IsPointerOnBallPublic(Vector2 screenPos) => IsPointerOnBall(screenPos);
 
-    void OnEnable()  { EnhancedTouchSupport.Enable(); }
-    void OnDisable() { EnhancedTouchSupport.Disable(); }
+    void OnEnable()
+    {
+        EnhancedTouchSupport.Enable();
+    }
+
+    void OnDisable()
+    {
+        EnhancedTouchSupport.Disable();
+    }
 
     void Start()
     {
+
         cam = Camera.main;
         rb = GetComponent<Rigidbody>();
         ballCol = GetComponent<Collider>();
@@ -55,11 +64,14 @@ public class BallDrag : MonoBehaviour
 
     void Update()
     {
-        if (!PlacementMode) return;
-        if (Mouse.current == null && Touchscreen.current == null && Touch.activeTouches.Count == 0) return;
+        if (!PlacementMode)
+        {
+            return;
+        }
 
         if (PointerDown(out var screenPos))
         {
+
             LastPointerDownOnBall = IsPointerOnBall(screenPos);
 
             if (LastPointerDownOnBall && IsDragging)
@@ -72,8 +84,10 @@ public class BallDrag : MonoBehaviour
             if (LastPointerDownOnBall && !IsDragging)
             {
                 StartDrag();
-                UnityEngine.Debug.Log("StartDrag called. Enabling camera focus.");
-                cameraFocus.focusEnabled = true;
+
+                if (cameraFocus != null)
+                    cameraFocus.focusEnabled = true;
+
                 pointerDownFrame = Time.frameCount;
                 return;
             }
@@ -92,16 +106,6 @@ public class BallDrag : MonoBehaviour
 
         if (PointerHeld(out screenPos) && IsDragging)
         {
-            // PC üçün “mouse dayananda dayan”
-            if (Mouse.current != null)
-            {
-                Vector2 md = Mouse.current.delta.ReadValue();
-                if (md.sqrMagnitude < 0.05f)
-                {
-                    hasDesired = false;
-                    return;
-                }
-            }
 
             Ray ray = cam.ScreenPointToRay(screenPos);
 
@@ -111,18 +115,20 @@ public class BallDrag : MonoBehaviour
                 Vector3 hitPoint = ray.GetPoint(enter);
                 desiredPos = new Vector3(hitPoint.x, yOffset, hitPoint.z);
                 hasDesired = true;
+
             }
         }
 
         if (PointerUp() && IsDragging)
+        {
             StopDrag();
+        }
     }
 
     void FixedUpdate()
     {
-        if (!PlacementMode) return;
-        if (!IsDragging) return;
-        if (!hasDesired) return;
+        if (!PlacementMode || !IsDragging || !hasDesired)
+            return;
 
         Vector3 current = rb.position;
         Vector3 to = desiredPos - current;
@@ -134,10 +140,12 @@ public class BallDrag : MonoBehaviour
         next = Vector3.Lerp(current, next, dragSmooth * Time.fixedDeltaTime);
 
         rb.MovePosition(next);
+
     }
 
     void StartDrag()
     {
+
         IsDragging = true;
 
         if (cameraFollow != null)
@@ -146,7 +154,7 @@ public class BallDrag : MonoBehaviour
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
-        rb.isKinematic = true;
+        rb.isKinematic = false;
         rb.useGravity = false;
 
         hasDesired = false;
@@ -157,22 +165,33 @@ public class BallDrag : MonoBehaviour
 
     void StopDrag()
     {
+
         IsDragging = false;
         hasDesired = false;
 
         if (cameraFollow != null)
             cameraFollow.SetFollowEnabled(false);
 
+        rb.isKinematic = false;
+        rb.useGravity = true;
+
+        rb.Sleep();
+
         BlockShootUntil = Time.time + blockShootAfterDrag;
     }
 
     bool IsPointerOnBall(Vector2 screenPos)
     {
-        if (cam == null || ballCol == null) return false;
+        if (cam == null || ballCol == null)
+        {
+            return false;
+        }
 
         Ray ray = cam.ScreenPointToRay(screenPos);
         if (Physics.Raycast(ray, out RaycastHit hit, 500f))
+        {
             return hit.collider == ballCol;
+        }
 
         return false;
     }
