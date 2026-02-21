@@ -7,6 +7,7 @@ TagManager:
   - Goal
   - GoalBackstop
   - Ball
+  - Barriers
   layers:
   - Default
   - TransparentFX

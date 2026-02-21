@@ -33,12 +33,12 @@ public class DrawTrajectoryAndShoot : MonoBehaviour
     public bool useMagnus = true;
     public float magnusStrength = 0.25f;   // 0.15 - 0.6 arası test et
     public float magnusMax = 25f;          // force limit
-
-
     private readonly List<Vector3> rawPath = new();
 
     private bool drawing;
     private BallDrag ballDrag;
+    private Barriers barriers;
+    private CameraFollowGoalFocus cameraFollowGoalFocus;
 
     void Start()
     {
@@ -49,6 +49,9 @@ public class DrawTrajectoryAndShoot : MonoBehaviour
     {
         if (!cam) cam = Camera.main;
         if (!rb) rb = GetComponent<Rigidbody>();
+
+        barriers = GameObject.Find("Barriers")?.GetComponent<Barriers>();
+        cameraFollowGoalFocus = GameObject.Find("Main Camera")?.GetComponent<CameraFollowGoalFocus>();
 
         rb.isKinematic = true;
         rb.useGravity = false;
@@ -98,9 +101,25 @@ public class DrawTrajectoryAndShoot : MonoBehaviour
             drawing = false;
 
             if (rawPath.Count < 2) return;
-
+            barriers.FreezeBarrier(); // shoot zamanı baryeri dondur
+            cameraFollowGoalFocus.freezeCamera = true; // shoot zamanı kamera fokusunu söndür
             Shoot_BaseDir_FirstSegment_AndCurve();
+
         }
+    }
+
+    void OnCollisionEnter(Collision c)
+    {
+        Vector3 v = rb.linearVelocity;
+        Vector3 n = c.contacts[0].normal;
+
+        Vector3 reflected = Vector3.Reflect(v, n) *  1.2f;
+
+        // çox yavaşlayıb dayanırsa, minimum sürət ver
+        if (reflected.magnitude < 2.0f)
+            reflected = reflected.normalized * 2.0f;
+
+        rb.linearVelocity = reflected;
     }
 
     void FixedUpdate()

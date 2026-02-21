@@ -7,9 +7,7 @@ public class BallDrag : MonoBehaviour
 {
     public LayerMask groundLayer;
     public float yOffset = 0.11f;
-
     public bool PlacementMode = true;
-
     public bool IsDragging { get; private set; }
     public bool LastPointerDownOnBall { get; private set; }
 
@@ -23,17 +21,14 @@ public class BallDrag : MonoBehaviour
     [Header("Shoot Block")]
     public float blockShootAfterDrag = 0.25f;
     public float BlockShootUntil { get; private set; }
-
     private Camera cam;
     private Rigidbody rb;
     private Collider ballCol;
-
     private Vector3 desiredPos;
     private bool hasDesired;
-
     private int pointerDownFrame = -1;
-
     public CameraFollowGoalFocus cameraFocus;
+    public GameObject barrier;
     public bool IsPointerOnBallPublic(Vector2 screenPos) => IsPointerOnBall(screenPos);
 
     void OnEnable()
@@ -145,7 +140,6 @@ public class BallDrag : MonoBehaviour
 
     void StartDrag()
     {
-
         IsDragging = true;
 
         if (cameraFollow != null)
@@ -178,6 +172,9 @@ public class BallDrag : MonoBehaviour
         rb.Sleep();
 
         BlockShootUntil = Time.time + blockShootAfterDrag;
+
+        Vector3 dir = (barrier.transform.position - rb.position).normalized;
+        barrier.transform.position = rb.position + dir * 9.15f;
     }
 
     bool IsPointerOnBall(Vector2 screenPos)
